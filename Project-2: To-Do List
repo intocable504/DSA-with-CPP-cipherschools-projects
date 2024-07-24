@@ -1,0 +1,165 @@
+#include <iostream> // Include standard input-output library
+#include <cstdlib> // Include standard library for functions like rand()
+#include <cmath> // Include cmath library for mathematical functions
+#include <bits/stdc++.h> // Include all standard libraries (for maps, vectors, etc.)
+#include <ctime> // Include ctime library for date and time functions
+
+using namespace std;
+
+class Task {
+public:
+    string description;
+    string category;
+    bool completed;
+    string dueDate; // TAKEN FROM SYSTEM TODAY();
+    string priority; // LOW MEDIUM
+
+    Task(string description, string category, string priority, string dueDate) {
+        this->description = description;
+        this->category = category;
+        this->dueDate = dueDate;
+        this->priority = priority;
+        this->completed = false;
+    }
+};
+
+stack<Task> undoStack;
+vector<Task> NotesAdded;
+vector<string> categories = {"Work", "Personal", "Study", "Shopping", "Other"};
+
+void displayTasks() {
+    if (NotesAdded.empty()) {
+        cout << "Please add some task first to View";
+    } else {
+        cout << "\nTasks:\n";
+        cout << "   " << "Task" << " " << "Category" << " " << "Priority" << " " << "DueDate" << " " << "Status" << "\n";
+
+        for (int i = 0; i < NotesAdded.size(); i++) {
+            cout << i + 1 << ". "
+                 << NotesAdded[i].description << " "
+                 << NotesAdded[i].category << " "
+                 << NotesAdded[i].priority << " "
+                 << NotesAdded[i].dueDate << " "
+                 << (NotesAdded[i].completed ? "Completed" : "Pending") << "\n";
+        }
+    }
+}
+
+void markTaskAsCompleted() {
+    int taskNumber;
+    cin >> taskNumber;
+
+    if (taskNumber > 0 && taskNumber <= NotesAdded.size()) {
+        NotesAdded[taskNumber - 1].completed = true;
+    } else {
+        cout << "Invalid Task Number" << "\n";
+    }
+}
+
+void deleteTask() {
+    int taskNumber;
+    cin >> taskNumber;
+
+    if (taskNumber > 0 && taskNumber <= NotesAdded.size()) {
+        Task task = NotesAdded[taskNumber - 1];
+        undoStack.push(task);
+        NotesAdded.erase(NotesAdded.begin() + taskNumber - 1);
+    } else {
+        cout << "Invalid Task Number" << "\n";
+    }
+}
+
+void undoLastDelete() {
+    if (!undoStack.empty()) {
+        auto lastValue = undoStack.top();
+        undoStack.pop();
+        NotesAdded.push_back(lastValue);
+    } else {
+        cout << "Nothing to Undo";
+    }
+}
+
+void filterTaskByCategory() {
+    // Implement this function based on the required filtering logic
+}
+
+void addTask() {
+    string description;
+    string category;
+    string priority;
+
+    cout << "Enter the Description\n";
+    cin.ignore();
+    getline(cin, description);
+
+    auto now = time(nullptr);
+    tm* current = localtime(&now);
+
+    char buffer[80];
+    strftime(buffer, sizeof(buffer), "%Y-%m-%d", current);
+    string dueDate(buffer);
+
+    cout << "Choose a category: " << endl;
+
+    for (size_t i = 0; i < categories.size(); ++i) {
+        cout << i + 1 << ". " << categories[i] << endl;
+    }
+
+    int categoryChoice;
+    cin >> categoryChoice;
+    if (categoryChoice > 0 && categoryChoice <= categories.size()) {
+        category = categories[categoryChoice - 1];
+    } else {
+        cout << "Invalid choice, defaulting to 'Other'" << endl;
+        category = "Other";
+    }
+
+    cout << "Enter priority (HIGH/LOW/MEDIUM): ";
+    cin >> priority;
+
+    Task task(description, category, priority, dueDate);
+    NotesAdded.push_back(task);
+}
+
+void displayMenu() {
+    int choice; // Variable to store the user's menu choice
+    do {
+        cout << "\nMenu:\n"
+             << "1. Add Task\n"
+             << "2. View Task\n"
+             << "3. Mark Task as Completed\n"
+             << "4. Delete Task\n"
+             << "5. Filter Task By Category\n"
+             << "6. Exit\n"
+             << "Enter your choice: ";
+        cin >> choice; // Read the user's choice
+
+        switch (choice) {
+            case 1:
+                addTask();
+                break;
+            case 2:
+                displayTasks();
+                break;
+            case 3:
+                markTaskAsCompleted();
+                break;
+            case 4:
+                deleteTask();
+                break;
+            case 5:
+                filterTaskByCategory();
+                break;
+            case 6:
+                cout << "Goodbye! Please do the tasks on time";
+                break;
+            default:
+                cout << "Invalid choice! Please choose again.";
+        }
+    } while (choice != 6); // Loop until the user chooses to exit
+}
+
+int main() {
+    displayMenu(); // Display the menu to the user
+    return 0; // End of the program
+}
