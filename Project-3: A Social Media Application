@@ -1,0 +1,220 @@
+#include <iostream>
+#include <map>
+#include <set>
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <ctime>
+
+using namespace std;
+
+class User {
+public:
+    string firstName;
+    string lastName;
+    int age;
+    string gender;
+    string status;
+    string birthday;  // in format YYYY-MM-DD
+
+    User() {};
+
+    User(string firstName, string lastName, int age, string gender, string birthday) {
+        this->firstName = firstName;
+        this->lastName = lastName;
+        this->age = age;
+        this->gender = gender;
+        this->birthday = birthday;
+    }
+
+    void setStatus(string status) {
+        this->status = status;
+    }
+
+    string getStatus() {
+        return status;
+    }
+};
+
+map<string, User> mapUserName;
+map<string, set<string>> Friends;
+map<string, set<string>> Blocked;
+
+void addUser(string userName, User user) {
+    if (mapUserName.find(userName) == mapUserName.end()) {
+        mapUserName[userName] = user;
+    } else {
+        cout << "UserName Already Taken\n";
+    }
+}
+
+void makeThemFriend(string userName1, string userName2) {
+    if (mapUserName.find(userName1) != mapUserName.end() && mapUserName.find(userName2) != mapUserName.end()) {
+        if (Blocked[userName1].find(userName2) == Blocked[userName1].end() && Blocked[userName2].find(userName1) == Blocked[userName2].end()) {
+            Friends[userName1].insert(userName2);
+            Friends[userName2].insert(userName1);
+        } else {
+            cout << "One of the users has blocked the other\n";
+        }
+    } else {
+        cout << "One or both usernames do not exist\n";
+    }
+}
+
+void blockUser(string blocker, string blockee) {
+    Blocked[blocker].insert(blockee);
+    Friends[blocker].erase(blockee);
+    Friends[blockee].erase(blocker);
+    cout << blocker << " has blocked " << blockee << endl;
+}
+
+void unblockUser(string blocker, string blockee) {
+    Blocked[blocker].erase(blockee);
+    cout << blocker << " has unblocked " << blockee << endl;
+}
+
+void displayAllUsers() {
+    for (auto i : mapUserName) {
+        cout << "UserName: " << i.first << ", Name: " << i.second.firstName << " " << i.second.lastName << ", Status: " << i.second.getStatus() << "\n";
+    }
+}
+
+void displayAllFriendships() {
+    for (auto i : Friends) {
+        cout << i.first << " is friends with: ";
+        for (auto j : i.second) {
+            cout << j << " ";
+        }
+        cout << "\n";
+    }
+}
+
+void findCommonFriends(string userName1, string userName2) {
+    if (Friends.find(userName1) != Friends.end() && Friends.find(userName2) != Friends.end()) {
+        set<string> common;
+        set_intersection(Friends[userName1].begin(), Friends[userName1].end(), Friends[userName2].begin(), Friends[userName2].end(), inserter(common, common.begin()));
+        cout << "Common friends of " << userName1 << " and " << userName2 << ": ";
+        for (const auto& friendName : common) {
+            cout << friendName << " ";
+        }
+        cout << "\n";
+    } else {
+        cout << "One or both users have no friends\n";
+    }
+}
+
+void recommendFriends(string userName) {
+    set<string> recommendations;
+    for (const auto& friendName : Friends[userName]) {
+        for (const auto& potentialFriend : Friends[friendName]) {
+            if (potentialFriend != userName && Friends[userName].find(potentialFriend) == Friends[userName].end()) {
+                recommendations.insert(potentialFriend);
+            }
+        }
+    }
+    cout << "Friend recommendations for " << userName << ": ";
+    for (const auto& recommendation : recommendations) {
+        cout << recommendation << " ";
+    }
+    cout << "\n";
+}
+
+void birthdayReminder() {
+    time_t now = time(0);
+    tm *ltm = localtime(&now);
+    char buffer[11];
+    strftime(buffer, sizeof(buffer), "%Y-%m-%d", ltm);
+    string today(buffer);
+
+    cout << "Today's birthdays: ";
+    for (const auto& user : mapUserName) {
+        if (user.second.birthday.substr(5) == today.substr(5)) {
+            cout << user.first << " (" << user.second.firstName << " " << user.second.lastName << "), ";
+        }
+    }
+    cout << "\n";
+}
+
+int main() {
+    int choice;
+    while (true) {
+        cout << "1. Add User\n2. Make Friends\n3. Display All Users\n4. Display All Friendships\n5. Set Status\n6. Find Common Friends\n7. Recommend Friends\n8. Block User\n9. Unblock User\n10. Birthday Reminder\n11. Exit\n";
+        cin >> choice;
+
+        if (choice == 1) {
+            string userName, firstName, lastName, gender, birthday;
+            int age;
+            cout << "Enter UserName: ";
+            cin >> userName;
+            cout << "Enter First Name: ";
+            cin >> firstName;
+            cout << "Enter Last Name: ";
+            cin >> lastName;
+            cout << "Enter Age: ";
+            cin >> age;
+            cout << "Enter Gender: ";
+            cin >> gender;
+            cout << "Enter Birthday (YYYY-MM-DD): ";
+            cin >> birthday;
+            User newUser(firstName, lastName, age, gender, birthday);
+            addUser(userName, newUser);
+        } else if (choice == 2) {
+            string userName1, userName2;
+            cout << "Enter First UserName: ";
+            cin >> userName1;
+            cout << "Enter Second UserName: ";
+            cin >> userName2;
+            makeThemFriend(userName1, userName2);
+        } else if (choice == 3) {
+            displayAllUsers();
+        } else if (choice == 4) {
+            displayAllFriendships();
+        } else if (choice == 5) {
+            string userName, status;
+            cout << "Enter UserName: ";
+            cin >> userName;
+            cout << "Enter Status: ";
+            cin.ignore();
+            getline(cin, status);
+            if (mapUserName.find(userName) != mapUserName.end()) {
+                mapUserName[userName].setStatus(status);
+            } else {
+                cout << "User not found\n";
+            }
+        } else if (choice == 6) {
+            string userName1, userName2;
+            cout << "Enter First UserName: ";
+            cin >> userName1;
+            cout << "Enter Second UserName: ";
+            cin >> userName2;
+            findCommonFriends(userName1, userName2);
+        } else if (choice == 7) {
+            string userName;
+            cout << "Enter UserName: ";
+            cin >> userName;
+            recommendFriends(userName);
+        } else if (choice == 8) {
+            string blocker, blockee;
+            cout << "Enter your UserName: ";
+            cin >> blocker;
+            cout << "Enter UserName to Block: ";
+            cin >> blockee;
+            blockUser(blocker, blockee);
+        } else if (choice == 9) {
+            string blocker, blockee;
+            cout << "Enter your UserName: ";
+            cin >> blocker;
+            cout << "Enter UserName to Unblock: ";
+            cin >> blockee;
+            unblockUser(blocker, blockee);
+        } else if (choice == 10) {
+            birthdayReminder();
+        } else if (choice == 11) {
+            break;
+        } else {
+            cout << "Invalid choice. Please try again.\n";
+        }
+    }
+
+    return 0;
+}
